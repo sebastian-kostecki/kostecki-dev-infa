@@ -1,0 +1,5 @@
+.env
+letsencrypt/
+*.log
+.DS_Store
+.idea/
