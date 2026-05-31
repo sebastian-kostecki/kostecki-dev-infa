@@ -9,7 +9,7 @@ This repo contains **infrastructure only** — no application code. Currently: l
 | Repo | Status | Path on VPS |
 |------|--------|-------------|
 | **kostecki-dev-infra** (this) | on GitHub | `/srv/infra` |
-| **kostecki-dev-landing** | on GitHub — add Docker before VPS deploy | `/srv/apps/landing` |
+| **kostecki-dev-landing** | on GitHub | `/srv/apps/landing` |
 | wallet-master | later | see [docs/wallet-master.md](docs/wallet-master.md) |
 
 ## Documentation

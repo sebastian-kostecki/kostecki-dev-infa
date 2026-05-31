@@ -127,6 +127,20 @@ Updates from `/srv/infra`:
 
 ## Troubleshooting
 
+**403 / site unreachable, but `docker exec landing wget http://127.0.0.1/` works** — Traefik cannot talk to Docker API. Check logs:
+
+```bash
+docker logs traefik 2>&1 | grep "client version"
+```
+
+If you see `client version 1.24 is too old`, ensure `docker-compose.yml` has `DOCKER_API_VERSION: "1.44"` under `traefik`, then:
+
+```bash
+cd /srv/infra
+git pull
+docker compose up -d --force-recreate traefik
+```
+
 **SSL not issued** — DNS → VPS, port 80 open, logs: `docker compose logs traefik`
 
 **Traefik does not see landing** — container on `proxy` network, labels `traefik.enable=true` and `traefik.docker.network=proxy`
