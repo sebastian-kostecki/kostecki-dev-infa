@@ -1,6 +1,6 @@
 services:
   traefik:
-    image: traefik:v3.3
+    image: traefik:v3.6.6
     container_name: traefik
     restart: unless-stopped
     command:
@@ -20,9 +20,6 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    environment:
-      # Required when host Docker Engine API >= 1.40 (Traefik default client is too old)
-      DOCKER_API_VERSION: "1.44"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-certs:/letsencrypt

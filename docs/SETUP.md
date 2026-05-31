@@ -127,18 +127,20 @@ Updates from `/srv/infra`:
 
 ## Troubleshooting
 
-**403 / site unreachable, but `docker exec landing wget http://127.0.0.1/` works** — Traefik cannot talk to Docker API. Check logs:
+**403 / 404, but `docker exec landing wget http://127.0.0.1/` works** — Traefik cannot discover containers (Docker API mismatch). Check logs:
 
 ```bash
 docker logs traefik 2>&1 | grep "client version"
 ```
 
-If you see `client version 1.24 is too old`, ensure `docker-compose.yml` has `DOCKER_API_VERSION: "1.44"` under `traefik`, then:
+If you see `client version 1.24 is too old`, your host runs **Docker 29+** and Traefik must be **v3.6.1+** (this repo uses `traefik:v3.6.6`). `DOCKER_API_VERSION` does **not** fix this.
 
 ```bash
 cd /srv/infra
 git pull
+docker compose pull traefik
 docker compose up -d --force-recreate traefik
+docker logs traefik 2>&1 | tail -10   # should show no ERR about client version
 ```
 
 **SSL not issued** — DNS → VPS, port 80 open, logs: `docker compose logs traefik`
