@@ -2,30 +2,33 @@
 
 Step-by-step guide to deploy **kostecki-dev-infra** and the landing page on **kostecki.dev**.
 
-Other apps (e.g. wallet-master): [ADDING-AN-APP.md](./ADDING-AN-APP.md) · Laravel details: [wallet-master.md](./wallet-master.md)
+- Landing repo details: [LANDING.md](./LANDING.md)
+- Other apps later: [ADDING-AN-APP.md](./ADDING-AN-APP.md) · Laravel: [wallet-master.md](./wallet-master.md)
 
 ---
 
 ## Checklist
 
-### kostecki-dev-infra repo
+### kostecki-dev-infra
 
-- [ ] Files in repo (docker-compose, scripts, .env.example)
-- [ ] `git init` + push to GitHub
+- [x] Files in repo (docker-compose, scripts, .env.example)
+- [x] Push to GitHub
 
-### kostecki-dev-landing repo
+### kostecki-dev-landing
 
-- [ ] `npm create vue@latest kostecki-dev-landing`
-- [ ] Tailwind, `docker-compose.yml`, `docker/nginx.conf`
-- [ ] `npm run dev` works locally
-- [ ] Push to GitHub
+- [x] Vue 3 project created (`pnpm create vue`)
+- [x] Local dev works (`pnpm dev`)
+- [x] Push to GitHub
+- [x] Add `docker-compose.yml` + `docker/nginx.conf` — see [LANDING.md](./LANDING.md)
+- [x] Push Docker files to GitHub
 
 ### VPS
 
 - [ ] DNS: `kostecki.dev`, `www.kostecki.dev` → VPS IP
+- [ ] Node.js + pnpm on VPS (for build)
 - [ ] `./scripts/bootstrap-vps.sh`
 - [ ] Clone infra → `/srv/infra`, `docker compose up -d`
-- [ ] Clone landing → `/srv/apps/landing`, build, `docker compose up -d`
+- [ ] Clone landing → `/srv/apps/landing`, `pnpm build`, `docker compose up -d`
 - [ ] https://kostecki.dev works with SSL
 
 ---
@@ -36,7 +39,7 @@ Other apps (e.g. wallet-master): [ADDING-AN-APP.md](./ADDING-AN-APP.md) · Larav
 - Landing deploy script
 - Documentation
 
-**Does not include:** Vue code, Laravel, databases. Landing lives in a separate repo: `kostecki-dev-landing`.
+**Does not include:** Vue code, Laravel, databases. Landing lives in **kostecki-dev-landing**.
 
 ---
 
@@ -51,9 +54,10 @@ kostecki-dev-infra/
 ├── docker-compose.dev.yml      # optional, local dev
 ├── scripts/
 │   ├── bootstrap-vps.sh
-│   └── deploy-landing.sh
+│   └── deploy-landing.sh       # uses pnpm
 └── docs/
     ├── SETUP.md
+    ├── LANDING.md
     ├── ARCHITECTURE.md
     ├── ADDING-AN-APP.md
     └── wallet-master.md
@@ -61,7 +65,7 @@ kostecki-dev-infra/
 
 ---
 
-## `.env` (only what you need now)
+## `.env` (infra only)
 
 ```env
 ACME_EMAIL=admin@kostecki.dev
@@ -78,11 +82,9 @@ On VPS: `cp .env.example .env`
 
 ```bash
 # Bootstrap (Docker, firewall, proxy network, directories)
-./scripts/bootstrap-vps.sh
-
-# Infra
 git clone git@github.com:USER/kostecki-dev-infra.git /srv/infra
 cd /srv/infra
+./scripts/bootstrap-vps.sh
 cp .env.example .env
 docker compose up -d
 
@@ -95,78 +97,31 @@ DNS must point to the VPS **before** Let's Encrypt can issue a certificate.
 
 ---
 
-## Landing — connect to Traefik
+## VPS — landing deploy
 
-In **kostecki-dev-landing** — `docker-compose.yml`:
-
-```yaml
-services:
-  landing:
-    image: nginx:alpine
-    container_name: landing
-    restart: unless-stopped
-    volumes:
-      - ./dist:/usr/share/nginx/html:ro
-      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    networks:
-      - proxy
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=proxy
-      - traefik.http.routers.landing.rule=Host(`kostecki.dev`) || Host(`www.kostecki.dev`)
-      - traefik.http.routers.landing.entrypoints=websecure
-      - traefik.http.routers.landing.tls.certresolver=letsencrypt
-      - traefik.http.services.landing.loadbalancer.server.port=80
-
-networks:
-  proxy:
-    external: true
-```
-
-`docker/nginx.conf`:
-
-```nginx
-server {
-    listen 80;
-    root /usr/share/nginx/html;
-    index index.html;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-}
-```
-
-Deploy on VPS:
+Prerequisites: [LANDING.md](./LANDING.md) (Node, pnpm, Docker files in landing repo).
 
 ```bash
+# One-time on VPS: Node + pnpm
+curl -fsSL https://get.docker.com | sh   # if not done by bootstrap
+# Install Node (e.g. via nvm) — see LANDING.md
+
+corepack enable
+corepack prepare pnpm@latest --activate
+
+# Deploy landing
+git clone git@github.com:USER/kostecki-dev-landing.git /srv/apps/landing
 cd /srv/apps/landing
-git clone git@github.com:USER/kostecki-dev-landing.git .
-npm ci && npm run build
+pnpm install --frozen-lockfile
+pnpm build
 docker compose up -d
 ```
 
-Updates: `./scripts/deploy-landing.sh` (from `/srv/infra`)
-
----
-
-## Local dev — landing
+Updates from `/srv/infra`:
 
 ```bash
-cd kostecki-dev-landing
-npm install
-npm run dev
-# → http://localhost:5173
+./scripts/deploy-landing.sh
 ```
-
-Traefik on the VPS is **not required** for day-to-day landing development.
-
-### Test Traefik locally (optional)
-
-1. `docker network create proxy`
-2. `docker compose -f docker-compose.dev.yml up -d`
-3. In landing, temporarily use: `Host(\`landing.localhost\`)`, entrypoint `web`
-4. `npm run build && docker compose up -d`
 
 ---
 
@@ -179,6 +134,8 @@ Traefik on the VPS is **not required** for day-to-day landing development.
 **404** — missing `dist/index.html` or missing `try_files` in nginx
 
 **Redirect loop** — landing nginx must not force HTTPS (Traefik handles TLS)
+
+**Build fails on VPS** — check Node version (`^20.19.0 || >=22.12.0` in landing `package.json`), pnpm installed
 
 ---
 

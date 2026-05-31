@@ -9,8 +9,8 @@ echo "==> Pulling latest..."
 git pull
 
 echo "==> Building..."
-npm ci
-npm run build
+pnpm install --frozen-lockfile
+pnpm build
 
 echo "==> Restarting container..."
 docker compose up -d

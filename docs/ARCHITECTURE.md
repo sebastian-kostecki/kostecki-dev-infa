@@ -63,12 +63,13 @@ On VPS:
 
 | Layer | Choice |
 |-------|--------|
-| Language | JavaScript |
-| Framework | Vue 3 + Vite |
-| CSS | Tailwind |
-| Production | `npm run build` → `dist/` → nginx container |
+| Package manager | pnpm |
+| Runtime | Node.js `^20.19.0 \|\| >=22.12.0` |
+| Language | TypeScript |
+| Framework | Vue 3 + Vite + vue-router |
+| Production | `pnpm build` → `dist/` → nginx container |
 
-Dev: `npm run dev` (:5173), no Traefik required.
+Dev: `pnpm dev` (:5173), no Traefik required. Details: [LANDING.md](./LANDING.md).
 
 ---
 
