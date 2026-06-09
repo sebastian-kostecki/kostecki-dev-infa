@@ -1,6 +1,6 @@
-# wallet-master (later)
+# wallet-master deployment
 
-Deployment plan for Laravel + Inertia + Reverb. **Not needed at startup** — return here when the landing is live and you start wallet-master.
+Deployment guide for Laravel + Inertia + Reverb + Horizon on **budget.kostecki.dev**.
 
 Related: [ADDING-AN-APP.md](./ADDING-AN-APP.md) · [ARCHITECTURE.md](./ARCHITECTURE.md)
 
@@ -8,21 +8,20 @@ Related: [ADDING-AN-APP.md](./ADDING-AN-APP.md) · [ARCHITECTURE.md](./ARCHITECT
 
 ## Is Reverb a separate application?
 
-**No.** Reverb is a **container in the wallet-master stack** — same Laravel codebase, command `php artisan reverb:start`.
+**No.** Reverb is a **supervisord program in the wallet-master app container** — same Laravel codebase, command `php artisan reverb:start`.
 
-It has a **separate subdomain** (`ws.kostecki.dev`) because WebSockets are easier to route separately — it is not a separate repo or product.
+It has a **separate subdomain** (`ws.budget.kostecki.dev`) because WebSockets are easier to route separately — it is not a separate repo or product.
 
 ```text
 wallet-master (one repo, one docker-compose.prod.yml)
-├── nginx       → app.kostecki.dev
-├── app         → PHP-FPM (Inertia)
-├── queue       → php artisan queue:work
-├── reverb      → php artisan reverb:start  → ws.kostecki.dev
-├── scheduler   → optional
-├── mysql, redis, typesense
+├── app         → supervisord: artisan serve, reverb, horizon, schedule:work
+│                 Traefik: budget.kostecki.dev :80, ws.budget.kostecki.dev :8080
+├── mysql
+├── redis
+└── typesense
 ```
 
-Analogy: `queue` is also a separate container, but nobody treats it as a separate application.
+Analogy: Horizon and the scheduler are also separate processes, but nobody treats them as separate applications.
 
 ---
 
@@ -33,20 +32,27 @@ Analogy: `queue` is also a separate container, but nobody treats it as a separat
 | Type | static Vue (`dist/`) | Laravel + Inertia |
 | Vue | standalone SPA project | Vue in `resources/js/Pages/` |
 | PHP | none | yes |
-| Domain | kostecki.dev | app.kostecki.dev |
+| Domain | kostecki.dev | budget.kostecki.dev |
 
-Inertia does **not** live in the landing repo — assets are built in the Laravel repo (`npm run build` → `public/build/`).
+Inertia does **not** live in the landing repo — assets are built in the Laravel repo (`npm run build` → `public/build/`) and baked into the production image via `docker/8.5/Dockerfile.prod`.
 
 ---
 
-## DNS (when deploying)
+## DNS
 
 ```text
-app.kostecki.dev  →  VPS_IP
-ws.kostecki.dev   →  VPS_IP
+budget.kostecki.dev     →  VPS IP (Cloudflare Proxied)
+ws.budget.kostecki.dev  →  VPS IP (Cloudflare Proxied)
 ```
 
-Optionally earlier: wildcard `*.kostecki.dev`.
+---
+
+## Cloudflare (Proxied)
+
+- A records for `budget` and `ws.budget` → VPS IP, **Proxied** (orange cloud)
+- SSL/TLS mode: **Full (strict)**
+- Network → WebSockets: **On**
+- Origin TLS is handled by Traefik (Let's Encrypt), same as landing
 
 ---
 
@@ -57,204 +63,153 @@ sudo mkdir -p /srv/apps/wallet-master
 git clone git@github.com:USER/wallet-master.git /srv/apps/wallet-master
 ```
 
+`bootstrap-vps.sh` creates this directory automatically.
+
 ---
 
 ## Traefik labels
 
-**nginx (HTTP / Inertia):**
+Labels live on the **app** container in wallet-master's `docker-compose.prod.yml`. You do **not** change the infra repo.
+
+**HTTP / Inertia (`budget.kostecki.dev`):**
 
 ```yaml
 labels:
   - traefik.enable=true
   - traefik.docker.network=proxy
-  - traefik.http.routers.laravel.rule=Host(`app.kostecki.dev`)
-  - traefik.http.routers.laravel.entrypoints=websecure
-  - traefik.http.routers.laravel.tls.certresolver=letsencrypt
-  - traefik.http.services.laravel.loadbalancer.server.port=80
+  - traefik.http.routers.wallet.rule=Host(`budget.kostecki.dev`)
+  - traefik.http.routers.wallet.entrypoints=websecure
+  - traefik.http.routers.wallet.tls.certresolver=letsencrypt
+  - traefik.http.services.wallet.loadbalancer.server.port=80
 ```
 
-**reverb (WebSocket):**
+**WebSocket (`ws.budget.kostecki.dev`):**
 
 ```yaml
 labels:
-  - traefik.enable=true
-  - traefik.docker.network=proxy
-  - traefik.http.routers.reverb.rule=Host(`ws.kostecki.dev`)
-  - traefik.http.routers.reverb.entrypoints=websecure
-  - traefik.http.routers.reverb.tls.certresolver=letsencrypt
-  - traefik.http.services.reverb.loadbalancer.server.port=8080
+  - traefik.http.routers.wallet-ws.rule=Host(`ws.budget.kostecki.dev`)
+  - traefik.http.routers.wallet-ws.entrypoints=websecure
+  - traefik.http.routers.wallet-ws.tls.certresolver=letsencrypt
+  - traefik.http.services.wallet-ws.loadbalancer.server.port=8080
 ```
-
-You do **not** change the infra repo — labels go in wallet-master's `docker-compose.prod.yml`.
 
 ---
 
-## docker-compose.prod.yml (outline)
+## Production stack
 
-Keep Sail (`docker-compose.yml`) **local only**. Use a separate prod file on VPS.
+Keep Sail (`docker-compose.yml`) **local only**. On VPS use `docker-compose.prod.yml` with:
 
-```yaml
+| File | Purpose |
+|------|---------|
+| `docker-compose.prod.yml` | app + mysql + redis + typesense + Traefik labels |
+| `docker/8.5/Dockerfile.prod` | Multi-stage build: composer + npm + PHP runtime |
+| `docker/8.5/supervisord.prod.conf` | artisan serve, reverb, horizon, schedule:work |
+| `scripts/deploy.sh` | Pull, build, up, migrate, cache |
+
+```text
 services:
-  nginx:
-    image: nginx:alpine
-    container_name: laravel-nginx
-    volumes:
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./public:/var/www/html/public:ro
-    depends_on:
-      - app
-    networks:
-      - laravel-internal
-      - proxy
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=proxy
-      - traefik.http.routers.laravel.rule=Host(`app.kostecki.dev`)
-      - traefik.http.routers.laravel.entrypoints=websecure
-      - traefik.http.routers.laravel.tls.certresolver=letsencrypt
-      - traefik.http.services.laravel.loadbalancer.server.port=80
-
-  app:
-    build:
-      context: .
-      dockerfile: docker/8.5/Dockerfile.prod
-    volumes:
-      - ./storage:/var/www/html/storage
-      - ./.env:/var/www/html/.env:ro
-    networks:
-      - laravel-internal
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-  queue:
-    build:
-      context: .
-      dockerfile: docker/8.5/Dockerfile.prod
-    command: php artisan queue:work --sleep=3 --tries=3
-    volumes:
-      - ./storage:/var/www/html/storage
-      - ./.env:/var/www/html/.env:ro
-    networks:
-      - laravel-internal
-    depends_on:
-      - app
-      - redis
-
-  reverb:
-    build:
-      context: .
-      dockerfile: docker/8.5/Dockerfile.prod
-    container_name: reverb
-    command: php artisan reverb:start
-    volumes:
-      - ./storage:/var/www/html/storage
-      - ./.env:/var/www/html/.env:ro
-    networks:
-      - laravel-internal
-      - proxy
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=proxy
-      - traefik.http.routers.reverb.rule=Host(`ws.kostecki.dev`)
-      - traefik.http.routers.reverb.entrypoints=websecure
-      - traefik.http.routers.reverb.tls.certresolver=letsencrypt
-      - traefik.http.services.reverb.loadbalancer.server.port=8080
-    depends_on:
-      - app
-      - redis
-
-  mysql:
-    image: mysql:8.4
-    environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - sail-mysql:/var/lib/mysql
-    networks:
-      - laravel-internal
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD}"]
-      retries: 3
-      timeout: 5s
-
-  redis:
-    image: redis:alpine
-    volumes:
-      - sail-redis:/data
-    networks:
-      - laravel-internal
-
-  typesense:
-    image: typesense/typesense:27.1
-    environment:
-      TYPESENSE_API_KEY: ${TYPESENSE_API_KEY}
-      TYPESENSE_DATA_DIR: /typesense-data
-    volumes:
-      - sail-typesense:/typesense-data
-    networks:
-      - laravel-internal
+  app       supervisord (serve :80, reverb :8080, horizon, scheduler)
+            networks: wallet-internal + proxy
+            volumes: storage, bootstrap/cache, .env
+  mysql     persistent data, healthcheck
+  redis     queues + cache, healthcheck
+  typesense persistent data, healthcheck
 
 networks:
-  laravel-internal:
-  proxy:
-    external: true
+  wallet-internal   bridge (internal services)
+  proxy             external (Traefik discovery)
 
 volumes:
-  sail-mysql:
-  sail-redis:
-  sail-typesense:
+  wallet-mysql, wallet-redis, wallet-typesense
 ```
 
-**Remove from prod vs Sail:** mailpit, Vite dev server, Xdebug, public DB/Redis ports.
+**Excluded from prod vs Sail:** mailpit, Vite dev server, Xdebug, public DB/Redis/Typesense ports, separate nginx/queue/reverb containers.
 
 ---
 
-## Laravel .env (prod) — Reverb
+## Laravel .env (prod) — key settings
+
+See `wallet-master/.env.example` for the full production block. Minimum:
 
 ```env
-APP_URL=https://app.kostecki.dev
+APP_URL=https://budget.kostecki.dev
 APP_ENV=production
 APP_DEBUG=false
 
+DB_CONNECTION=mysql
+DB_HOST=mysql
+
+QUEUE_CONNECTION=redis
+CACHE_STORE=redis
+REDIS_HOST=redis
+
 BROADCAST_CONNECTION=reverb
-REVERB_HOST=ws.kostecki.dev
+REVERB_HOST=ws.budget.kostecki.dev
 REVERB_PORT=443
 REVERB_SCHEME=https
 REVERB_SERVER_HOST=0.0.0.0
 REVERB_SERVER_PORT=8080
 
-VITE_REVERB_HOST=ws.kostecki.dev
+VITE_REVERB_HOST=ws.budget.kostecki.dev
 VITE_REVERB_PORT=443
 VITE_REVERB_SCHEME=https
+
+TYPESENSE_ENABLED=true
+TYPESENSE_HOST=typesense
 ```
 
-`npm run build` in the Laravel repo must have `VITE_REVERB_*` set.
+`VITE_REVERB_*` are passed as Docker build args in `docker-compose.prod.yml` — rebuild the app image after changing them.
 
 ---
 
-## Deploy (example script)
+## Deploy
 
-Save in wallet-master repo as `scripts/deploy.sh`, or run manually:
+### First deploy (on VPS)
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
 cd /srv/apps/wallet-master
+cp .env.example .env
+# Edit .env with production secrets
 
-git pull
-docker compose -f docker-compose.prod.yml build app queue reverb
-docker compose -f docker-compose.prod.yml up -d
-docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
-docker compose -f docker-compose.prod.yml exec -T app php artisan config:cache
-docker compose -f docker-compose.prod.yml exec -T app php artisan route:cache
-docker compose -f docker-compose.prod.yml exec -T app php artisan view:cache
+docker compose -f docker-compose.prod.yml run --rm app php artisan key:generate
+./scripts/deploy.sh
 ```
+
+### Updates (from wallet-master repo)
+
+```bash
+cd /srv/apps/wallet-master
+./scripts/deploy.sh
+```
+
+`scripts/deploy.sh` pulls, builds the app image, starts the stack, runs migrations, and caches config/routes/views.
+
+### Updates (from infra repo)
+
+```bash
+cd /srv/infra
+./scripts/deploy-wallet-master.sh
+```
+
+Uses `VPS_WALLET_DIR` from infra `.env` (default `/srv/apps/wallet-master`).
+
+---
+
+## Verify
+
+```bash
+curl -I https://budget.kostecki.dev/up
+```
+
+Expected: `HTTP/2 200`
+
+Check supervisord processes:
+
+```bash
+docker compose -f docker-compose.prod.yml exec -T app supervisorctl status
+```
+
+Expected: `php`, `reverb`, `horizon`, `scheduler` all `RUNNING`.
 
 ---
 
@@ -268,12 +223,3 @@ In wallet-master repo:
 ```
 
 Sail and Traefik on VPS operate independently.
-
----
-
-## To clarify before deployment
-
-- [ ] `Dockerfile.prod` (multi-stage: composer + npm build + PHP-FPM)
-- [ ] SMTP (instead of Mailpit)
-- [ ] MySQL backup (cron)
-- [ ] CI/CD

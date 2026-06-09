@@ -18,7 +18,7 @@ sudo ufw allow 443/tcp
 sudo ufw --force enable
 
 echo "==> Creating directories..."
-sudo mkdir -p /srv/infra /srv/apps/landing
+sudo mkdir -p /srv/infra /srv/apps/landing /srv/apps/wallet-master
 sudo chown -R "$USER:$USER" /srv
 
 echo "==> Creating Docker network..."
@@ -29,3 +29,4 @@ echo "  1. Clone kostecki-dev-infra to /srv/infra"
 echo "  2. cp .env.example .env && edit ACME_EMAIL"
 echo "  3. docker compose up -d"
 echo "  4. Clone kostecki-dev-landing to /srv/apps/landing, build & deploy"
+echo "  5. Clone wallet-master to /srv/apps/wallet-master — see docs/wallet-master.md"

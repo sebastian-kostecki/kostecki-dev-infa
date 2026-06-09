@@ -10,28 +10,23 @@ Internet :443
 │ Traefik     │  kostecki-dev-infra, network: proxy
 └──────┬──────┘
        │
-       ▼
- kostecki.dev / www.kostecki.dev
- landing (nginx + dist/)   ← kostecki-dev-landing repo
+       ├── kostecki.dev / www.kostecki.dev
+       │   landing (nginx + dist/)   ← kostecki-dev-landing repo
+       │
+       ├── budget.kostecki.dev
+       │   wallet-master (Laravel + Inertia)   ← wallet-master repo
+       │
+       └── ws.budget.kostecki.dev
+           Reverb (WebSocket, same app container)
 ```
 
 | Layer | Repo | Domain |
 |-------|------|--------|
 | Proxy | kostecki-dev-infra | — |
 | Landing | kostecki-dev-landing | kostecki.dev |
+| wallet-master | wallet-master | budget.kostecki.dev, ws.budget.kostecki.dev |
 
 Public exposure: **Traefik only** (ports 80/443).
-
----
-
-## Planned state (later)
-
-```text
-Traefik
-├── kostecki.dev           → landing
-├── app.kostecki.dev       → wallet-master (Laravel + Inertia)
-└── ws.kostecki.dev        → Reverb (WebSocket, same stack as Laravel)
-```
 
 Details: [wallet-master.md](./wallet-master.md)
 
@@ -41,8 +36,8 @@ Details: [wallet-master.md](./wallet-master.md)
 
 ```text
 kostecki-dev-infra/     ← Traefik, scripts (this repo)
-kostecki-dev-landing/   ← Vue landing (now)
-wallet-master/          ← Laravel (later)
+kostecki-dev-landing/   ← Vue landing
+wallet-master/          ← Laravel + Inertia + Reverb
 ```
 
 Separate repo per application — **no** monorepo or submodules.
@@ -53,8 +48,8 @@ On VPS:
 /srv/
 ├── infra/              ← kostecki-dev-infra
 └── apps/
-    └── landing/        ← kostecki-dev-landing
-    # wallet-master/    ← add later
+    ├── landing/        ← kostecki-dev-landing
+    └── wallet-master/  ← wallet-master
 ```
 
 ---

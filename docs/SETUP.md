@@ -31,6 +31,14 @@ Step-by-step guide to deploy **kostecki-dev-infra** and the landing page on **ko
 - [ ] Clone landing → `/srv/apps/landing`, `pnpm build`, `docker compose up -d`
 - [ ] https://kostecki.dev works with SSL
 
+### wallet-master
+
+- [ ] DNS: `budget.kostecki.dev`, `ws.budget.kostecki.dev` → VPS IP (Cloudflare Proxied)
+- [ ] Clone wallet-master → `/srv/apps/wallet-master`
+- [ ] Configure `.env` (see [wallet-master.md](./wallet-master.md))
+- [ ] `docker compose -f docker-compose.prod.yml up -d`
+- [ ] https://budget.kostecki.dev/up returns 200
+
 ---
 
 ## Purpose of this repo
@@ -54,7 +62,8 @@ kostecki-dev-infra/
 ├── docker-compose.dev.yml      # optional, local dev
 ├── scripts/
 │   ├── bootstrap-vps.sh
-│   └── deploy-landing.sh       # uses pnpm
+│   ├── deploy-landing.sh       # uses pnpm
+│   └── deploy-wallet-master.sh # calls wallet-master/scripts/deploy.sh
 └── docs/
     ├── SETUP.md
     ├── LANDING.md
@@ -121,6 +130,29 @@ Updates from `/srv/infra`:
 
 ```bash
 ./scripts/deploy-landing.sh
+```
+
+---
+
+## VPS — wallet-master deploy
+
+Prerequisites: [wallet-master.md](./wallet-master.md) (Docker files in wallet-master repo, Cloudflare DNS).
+
+```bash
+# One-time on VPS
+git clone git@github.com:USER/wallet-master.git /srv/apps/wallet-master
+cd /srv/apps/wallet-master
+cp .env.example .env
+# Edit .env with production secrets
+
+docker compose -f docker-compose.prod.yml run --rm app php artisan key:generate
+./scripts/deploy.sh
+```
+
+Updates from `/srv/infra`:
+
+```bash
+./scripts/deploy-wallet-master.sh
 ```
 
 ---
