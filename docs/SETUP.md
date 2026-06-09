@@ -33,7 +33,7 @@ Step-by-step guide to deploy **kostecki-dev-infra** and the landing page on **ko
 
 ### wallet-master
 
-- [ ] DNS: `budget.kostecki.dev`, `ws.budget.kostecki.dev` → VPS IP (Cloudflare Proxied)
+- [ ] DNS: `budget.kostecki.dev` → VPS IP (Cloudflare Proxied); WebSockets use same host (not `ws.budget.*`)
 - [ ] Clone wallet-master → `/srv/apps/wallet-master`
 - [ ] Configure `.env` (see [wallet-master.md](./wallet-master.md))
 - [ ] `docker compose -f docker-compose.prod.yml up -d`

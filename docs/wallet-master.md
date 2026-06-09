@@ -10,12 +10,12 @@ Related: [ADDING-AN-APP.md](./ADDING-AN-APP.md) · [ARCHITECTURE.md](./ARCHITECT
 
 **No.** Reverb is a **supervisord program in the wallet-master app container** — same Laravel codebase, command `php artisan reverb:start`.
 
-It has a **separate subdomain** (`ws.budget.kostecki.dev`) because WebSockets are easier to route separately — it is not a separate repo or product.
+WebSockets use the **same domain** as the app (`budget.kostecki.dev`, paths `/app` and `/apps`) — not a separate repo or product.
 
 ```text
 wallet-master (one repo, one docker-compose.prod.yml)
 ├── app         → supervisord: artisan serve, reverb, horizon, schedule:work
-│                 Traefik: budget.kostecki.dev :80, ws.budget.kostecki.dev :8080
+│                 Traefik: budget.kostecki.dev :80, /app + /apps → :8080 (Reverb)
 ├── mysql
 ├── redis
 └── typesense
@@ -41,15 +41,16 @@ Inertia does **not** live in the landing repo — assets are built in the Larave
 ## DNS
 
 ```text
-budget.kostecki.dev     →  VPS IP (Cloudflare Proxied)
-ws.budget.kostecki.dev  →  VPS IP (Cloudflare Proxied)
+budget.kostecki.dev  →  VPS IP (Cloudflare Proxied)
 ```
+
+WebSockets use the same host (`wss://budget.kostecki.dev/app/...`). Do **not** use `ws.budget.kostecki.dev` — Cloudflare Universal SSL covers `*.kostecki.dev` only, not third-level names like `*.budget.kostecki.dev`.
 
 ---
 
 ## Cloudflare (Proxied)
 
-- A records for `budget` and `ws.budget` → VPS IP, **Proxied** (orange cloud)
+- A record for `budget` → VPS IP, **Proxied** (orange cloud)
 - SSL/TLS mode: **Full (strict)**
 - Network → WebSockets: **On**
 - Origin TLS is handled by Traefik (Let's Encrypt), same as landing
@@ -83,11 +84,12 @@ labels:
   - traefik.http.services.wallet.loadbalancer.server.port=80
 ```
 
-**WebSocket (`ws.budget.kostecki.dev`):**
+**WebSocket (same host, Reverb paths):**
 
 ```yaml
 labels:
-  - traefik.http.routers.wallet-ws.rule=Host(`ws.budget.kostecki.dev`)
+  - traefik.http.routers.wallet-ws.rule=Host(`budget.kostecki.dev`) && (PathPrefix(`/app`) || PathPrefix(`/apps`))
+  - traefik.http.routers.wallet-ws.priority=100
   - traefik.http.routers.wallet-ws.entrypoints=websecure
   - traefik.http.routers.wallet-ws.tls.certresolver=letsencrypt
   - traefik.http.services.wallet-ws.loadbalancer.server.port=8080
@@ -144,13 +146,13 @@ CACHE_STORE=redis
 REDIS_HOST=redis
 
 BROADCAST_CONNECTION=reverb
-REVERB_HOST=ws.budget.kostecki.dev
+REVERB_HOST=budget.kostecki.dev
 REVERB_PORT=443
 REVERB_SCHEME=https
 REVERB_SERVER_HOST=0.0.0.0
 REVERB_SERVER_PORT=8080
 
-VITE_REVERB_HOST=ws.budget.kostecki.dev
+VITE_REVERB_HOST=budget.kostecki.dev
 VITE_REVERB_PORT=443
 VITE_REVERB_SCHEME=https
 

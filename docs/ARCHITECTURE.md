@@ -16,7 +16,7 @@ Internet :443
        ├── budget.kostecki.dev
        │   wallet-master (Laravel + Inertia)   ← wallet-master repo
        │
-       └── ws.budget.kostecki.dev
+       └── budget.kostecki.dev/app, /apps
            Reverb (WebSocket, same app container)
 ```
 
@@ -24,7 +24,7 @@ Internet :443
 |-------|------|--------|
 | Proxy | kostecki-dev-infra | — |
 | Landing | kostecki-dev-landing | kostecki.dev |
-| wallet-master | wallet-master | budget.kostecki.dev, ws.budget.kostecki.dev |
+| wallet-master | wallet-master | budget.kostecki.dev (+ Reverb on /app, /apps) |
 
 Public exposure: **Traefik only** (ports 80/443).
 
