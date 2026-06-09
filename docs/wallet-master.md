@@ -164,6 +164,39 @@ TYPESENSE_HOST=typesense
 
 ---
 
+## Backups
+
+Backups use [spatie/laravel-backup](https://github.com/spatie/laravel-backup) (`BACKUP_DISK=backups`). The scheduler runs `backup:run` daily at 01:30 (see `routes/console.php`).
+
+On the VPS, archives are stored **outside the app directory**:
+
+```text
+/storage/wallet-master-backups/   ← host (persistent)
+        ↓ mounted into container as
+/var/www/html/storage/app/backups/
+```
+
+`docker-compose.prod.yml` mounts the host path via `BACKUP_HOST_DIR` (default `/storage/wallet-master-backups`).
+
+### One-time setup (VPS)
+
+```bash
+sudo mkdir -p /storage/wallet-master-backups
+sudo chown -R "$USER:$USER" /storage/wallet-master-backups
+```
+
+`bootstrap-vps.sh` creates this directory automatically on new servers.
+
+### Test a backup manually
+
+```bash
+cd /srv/apps/wallet-master
+docker compose -f docker-compose.prod.yml exec -T app php artisan backup:run --only-db
+ls -la /storage/wallet-master-backups/
+```
+
+---
+
 ## Deploy
 
 ### First deploy (on VPS)

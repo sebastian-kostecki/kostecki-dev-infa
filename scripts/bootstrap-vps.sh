@@ -18,8 +18,8 @@ sudo ufw allow 443/tcp
 sudo ufw --force enable
 
 echo "==> Creating directories..."
-sudo mkdir -p /srv/infra /srv/apps/landing /srv/apps/wallet-master
-sudo chown -R "$USER:$USER" /srv
+sudo mkdir -p /srv/infra /srv/apps/landing /srv/apps/wallet-master /storage/wallet-master-backups
+sudo chown -R "$USER:$USER" /srv /storage/wallet-master-backups
 
 echo "==> Creating Docker network..."
 docker network create proxy 2>/dev/null || true
