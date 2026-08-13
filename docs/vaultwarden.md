@@ -37,7 +37,7 @@ Cloudflare (Proxied) → Traefik → vault.kostecki.dev → vaultwarden :80
 ```bash
 sudo mkdir -p /srv/apps/vaultwarden
 sudo chown "$USER:$USER" /srv/apps/vaultwarden
-git clone git@github.com:YOUR_USER/kostecki-dev-vaultwarden.git /srv/apps/vaultwarden
+git clone git@github.com:sebastian-kostecki/kostecki-dev-vaultwarden.git /srv/apps/vaultwarden
 ```
 
 `bootstrap-vps.sh` creates `/srv/apps/vaultwarden` automatically.
