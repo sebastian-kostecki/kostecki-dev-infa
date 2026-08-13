@@ -2,7 +2,7 @@
 
 Traefik reverse proxy and deploy scripts for **kostecki.dev**.
 
-This repo contains **infrastructure only** — no application code. Currently: landing page support.
+This repo contains **infrastructure only** — no application code. Apps (landing, wallet-master, vaultwarden) live in separate repos and attach via Traefik labels.
 
 ## Repositories
 
@@ -10,7 +10,8 @@ This repo contains **infrastructure only** — no application code. Currently: l
 |------|--------|-------------|
 | **kostecki-dev-infra** (this) | on GitHub | `/srv/infra` |
 | **kostecki-dev-landing** | on GitHub | `/srv/apps/landing` |
-| wallet-master | later | see [docs/wallet-master.md](docs/wallet-master.md) |
+| wallet-master | on GitHub | `/srv/apps/wallet-master` |
+| **kostecki-dev-vaultwarden** | on GitHub | `/srv/apps/vaultwarden` |
 
 ## Documentation
 
@@ -20,7 +21,8 @@ This repo contains **infrastructure only** — no application code. Currently: l
 | [docs/LANDING.md](docs/LANDING.md) | **Landing repo** — Node, pnpm, Docker, local dev |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Overview (current + planned) |
 | [docs/ADDING-AN-APP.md](docs/ADDING-AN-APP.md) | How to attach another app to Traefik |
-| [docs/wallet-master.md](docs/wallet-master.md) | Laravel + Inertia + Reverb (when ready) |
+| [docs/wallet-master.md](docs/wallet-master.md) | Laravel + Inertia + Reverb |
+| [docs/vaultwarden.md](docs/vaultwarden.md) | Vaultwarden at vault.kostecki.dev |
 
 ## Quick start (VPS)
 

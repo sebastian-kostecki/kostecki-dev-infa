@@ -3,7 +3,7 @@
 Step-by-step guide to deploy **kostecki-dev-infra** and the landing page on **kostecki.dev**.
 
 - Landing repo details: [LANDING.md](./LANDING.md)
-- Other apps later: [ADDING-AN-APP.md](./ADDING-AN-APP.md) · Laravel: [wallet-master.md](./wallet-master.md)
+- Other apps: [ADDING-AN-APP.md](./ADDING-AN-APP.md) · Laravel: [wallet-master.md](./wallet-master.md) · Vaultwarden: [vaultwarden.md](./vaultwarden.md)
 
 ---
 
@@ -38,6 +38,15 @@ Step-by-step guide to deploy **kostecki-dev-infra** and the landing page on **ko
 - [ ] Configure `.env` (see [wallet-master.md](./wallet-master.md))
 - [ ] `docker compose -f docker-compose.prod.yml up -d`
 - [ ] https://budget.kostecki.dev/up returns 200
+
+### vaultwarden
+
+- [ ] DNS: `vault.kostecki.dev` → VPS IP (Cloudflare Proxied)
+- [ ] Clone kostecki-dev-vaultwarden → `/srv/apps/vaultwarden`
+- [ ] Configure `.env` (see [vaultwarden.md](./vaultwarden.md))
+- [ ] `docker compose up -d`
+- [ ] First user via `/admin` invite
+- [ ] https://vault.kostecki.dev works with SSL
 
 ---
 

@@ -2,6 +2,8 @@
 
 Traefik discovers applications automatically via **Docker labels**. The **kostecki-dev-infra repo does not need changes** — you only add a new application repo.
 
+Worked example with an upstream image (no app build): [vaultwarden.md](./vaultwarden.md) (`vault.kostecki.dev`).
+
 ---
 
 ## 3 steps
