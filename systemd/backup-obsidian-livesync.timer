@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily Obsidian LiveSync restic backup
+
+[Timer]
+OnCalendar=*-*-* 03:20:00
+Persistent=true
+Unit=backup-obsidian-livesync.service
+
+[Install]
+WantedBy=timers.target

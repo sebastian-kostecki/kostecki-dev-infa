@@ -1,0 +1,11 @@
+[Unit]
+Description=Restic backup for Vaultwarden
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+ExecStart=/srv/infra/scripts/backup-vaultwarden.sh
