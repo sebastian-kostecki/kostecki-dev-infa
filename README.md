@@ -25,6 +25,7 @@ This repo contains **infrastructure only** — no application code. Apps (landin
 | [docs/wallet-master.md](docs/wallet-master.md) | Laravel + Inertia + Reverb |
 | [docs/vaultwarden.md](docs/vaultwarden.md) | Vaultwarden at vault.kostecki.dev |
 | [docs/obsidian-livesync.md](docs/obsidian-livesync.md) | CouchDB LiveSync at obsidian.kostecki.dev |
+| [docs/backups.md](docs/backups.md) | Restic backups for Vaultwarden and LiveSync |
 
 ## Quick start (VPS)
 

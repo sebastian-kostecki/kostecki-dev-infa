@@ -36,7 +36,7 @@ Internet :443
 
 Public exposure: **Traefik only** (ports 80/443).
 
-Details: [wallet-master.md](./wallet-master.md) · [vaultwarden.md](./vaultwarden.md) · [obsidian-livesync.md](./obsidian-livesync.md)
+Details: [wallet-master.md](./wallet-master.md) · [vaultwarden.md](./vaultwarden.md) · [obsidian-livesync.md](./obsidian-livesync.md) · [backups.md](./backups.md)
 
 ---
 
@@ -63,7 +63,15 @@ On VPS:
     ├── wallet-master/  ← wallet-master
     ├── vaultwarden/    ← kostecki-dev-vaultwarden
     └── obsidian-livesync/  ← copied from stacks/obsidian-livesync (not a clone)
+
+/storage/                   ← network mount (not the VPS system disk)
+├── wallet-master-backups/  ← Spatie
+├── restic/vaultwarden/
+├── restic/obsidian-livesync/
+└── backup-staging/
 ```
+
+Host restic jobs (systemd) backup Vaultwarden and LiveSync. Ops: [backups.md](./backups.md).
 
 ---
 

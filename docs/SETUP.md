@@ -3,7 +3,7 @@
 Step-by-step guide to deploy **kostecki-dev-infra** and the landing page on **kostecki.dev**.
 
 - Landing repo details: [LANDING.md](./LANDING.md)
-- Other apps: [ADDING-AN-APP.md](./ADDING-AN-APP.md) · Laravel: [wallet-master.md](./wallet-master.md) · Vaultwarden: [vaultwarden.md](./vaultwarden.md) · LiveSync: [obsidian-livesync.md](./obsidian-livesync.md)
+- Other apps: [ADDING-AN-APP.md](./ADDING-AN-APP.md) · Laravel: [wallet-master.md](./wallet-master.md) · Vaultwarden: [vaultwarden.md](./vaultwarden.md) · LiveSync: [obsidian-livesync.md](./obsidian-livesync.md) · Backups: [backups.md](./backups.md)
 
 ---
 
@@ -55,6 +55,12 @@ Step-by-step guide to deploy **kostecki-dev-infra** and the landing page on **ko
 - [ ] `./scripts/deploy-obsidian-livesync.sh`
 - [ ] Plugin connects at `https://obsidian.kostecki.dev` (see [obsidian-livesync.md](./obsidian-livesync.md))
 
+### Backups (restic)
+
+- [ ] `/storage` mounted from the backup host
+- [ ] Password files in `/etc/restic/`
+- [ ] `sudo ./scripts/install-backup-timers.sh` — see [backups.md](./backups.md)
+
 ---
 
 ## Purpose of this repo
@@ -79,8 +85,13 @@ kostecki-dev-infra/
 ├── docker-compose.dev.yml      # optional, local dev
 ├── stacks/
 │   └── obsidian-livesync/      # CouchDB template copied to the VPS
+├── systemd/                    # restic backup timers (installed once on VPS)
 ├── scripts/
+│   ├── lib/
 │   ├── bootstrap-vps.sh
+│   ├── backup-vaultwarden.sh
+│   ├── backup-obsidian-livesync.sh
+│   ├── install-backup-timers.sh
 │   ├── deploy-landing.sh       # uses pnpm
 │   ├── deploy-wallet-master.sh
 │   ├── deploy-vaultwarden.sh
@@ -90,6 +101,7 @@ kostecki-dev-infra/
     ├── LANDING.md
     ├── ARCHITECTURE.md
     ├── ADDING-AN-APP.md
+    ├── backups.md
     ├── wallet-master.md
     ├── vaultwarden.md
     └── obsidian-livesync.md

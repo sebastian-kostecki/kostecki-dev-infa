@@ -168,6 +168,10 @@ docker compose up -d
 
 Data stays in the Docker volume `vw-data`.
 
+## Backups
+
+Automated restic to `/storage/restic/vaultwarden`. Setup and restore: [backups.md](./backups.md).
+
 When bumping the image version, change the tag in `docker-compose.yml` (currently `1.37.1`), commit, pull on VPS, then `docker compose pull && docker compose up -d`.
 
 ---

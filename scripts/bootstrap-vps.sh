@@ -11,6 +11,12 @@ if ! command -v docker &>/dev/null; then
   echo "Log out and back in for docker group to take effect."
 fi
 
+echo "==> Installing restic..."
+if ! command -v restic &>/dev/null; then
+  sudo apt-get update
+  sudo apt-get install -y restic
+fi
+
 echo "==> Configuring firewall..."
 sudo ufw allow OpenSSH
 sudo ufw allow 80/tcp
@@ -18,7 +24,16 @@ sudo ufw allow 443/tcp
 sudo ufw --force enable
 
 echo "==> Creating directories..."
-sudo mkdir -p /srv/infra /srv/apps/landing /srv/apps/wallet-master /srv/apps/vaultwarden /srv/apps/obsidian-livesync /storage/wallet-master-backups
+sudo mkdir -p \
+  /srv/infra \
+  /srv/apps/landing \
+  /srv/apps/wallet-master \
+  /srv/apps/vaultwarden \
+  /srv/apps/obsidian-livesync \
+  /storage/wallet-master-backups \
+  /storage/restic/vaultwarden \
+  /storage/restic/obsidian-livesync \
+  /storage/backup-staging
 sudo chown -R "$USER:$USER" /srv /storage/wallet-master-backups
 
 echo "==> Creating Docker network..."
@@ -32,3 +47,4 @@ echo "  4. Clone kostecki-dev-landing to /srv/apps/landing, build & deploy"
 echo "  5. Clone wallet-master to /srv/apps/wallet-master — see docs/wallet-master.md"
 echo "  6. Clone kostecki-dev-vaultwarden to /srv/apps/vaultwarden — see docs/vaultwarden.md"
 echo "  7. Obsidian LiveSync: copy stacks/obsidian-livesync/.env.example to /srv/apps/obsidian-livesync/.env, then ./scripts/deploy-obsidian-livesync.sh"
+echo "  8. Backups: create /etc/restic/*.password, then sudo ./scripts/install-backup-timers.sh — see docs/backups.md"

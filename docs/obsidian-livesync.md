@@ -116,6 +116,10 @@ When bumping the image version, change the tag in `stacks/obsidian-livesync/dock
 
 Edits made by hand under `/srv/apps/obsidian-livesync` (except `.env`) are lost on the next deploy.
 
+## Backups
+
+Automated restic to `/storage/restic/obsidian-livesync` (short CouchDB stop for a consistent volume copy). Setup and restore: [backups.md](./backups.md).
+
 ---
 
 ## Architecture (reference)
