@@ -3,7 +3,7 @@
 Step-by-step guide to deploy **kostecki-dev-infra** and the landing page on **kostecki.dev**.
 
 - Landing repo details: [LANDING.md](./LANDING.md)
-- Other apps: [ADDING-AN-APP.md](./ADDING-AN-APP.md) · Laravel: [wallet-master.md](./wallet-master.md) · Vaultwarden: [vaultwarden.md](./vaultwarden.md)
+- Other apps: [ADDING-AN-APP.md](./ADDING-AN-APP.md) · Laravel: [wallet-master.md](./wallet-master.md) · Vaultwarden: [vaultwarden.md](./vaultwarden.md) · LiveSync: [obsidian-livesync.md](./obsidian-livesync.md)
 
 ---
 
@@ -48,15 +48,23 @@ Step-by-step guide to deploy **kostecki-dev-infra** and the landing page on **ko
 - [ ] First user via `/admin` invite
 - [ ] https://vault.kostecki.dev works with SSL
 
+### Obsidian LiveSync (CouchDB)
+
+- [ ] DNS: `obsidian.kostecki.dev` → VPS IP (Cloudflare **DNS only**)
+- [ ] Copy `stacks/obsidian-livesync/.env.example` → `/srv/apps/obsidian-livesync/.env` and set `COUCHDB_*`
+- [ ] `./scripts/deploy-obsidian-livesync.sh`
+- [ ] Plugin connects at `https://obsidian.kostecki.dev` (see [obsidian-livesync.md](./obsidian-livesync.md))
+
 ---
 
 ## Purpose of this repo
 
 - Traefik (reverse proxy, SSL)
-- Landing deploy script
+- Deploy scripts
 - Documentation
+- Stack templates that have no separate app repo (currently CouchDB LiveSync)
 
-**Does not include:** Vue code, Laravel, databases. Landing lives in **kostecki-dev-landing**.
+**Does not include:** Vue code, Laravel. Landing lives in **kostecki-dev-landing**. CouchDB for LiveSync is the documented exception: templates here, data and `.env` on the VPS.
 
 ---
 
@@ -67,18 +75,24 @@ kostecki-dev-infra/
 ├── README.md
 ├── .env.example
 ├── .gitignore
-├── docker-compose.yml
+├── docker-compose.yml          # Traefik only
 ├── docker-compose.dev.yml      # optional, local dev
+├── stacks/
+│   └── obsidian-livesync/      # CouchDB template copied to the VPS
 ├── scripts/
 │   ├── bootstrap-vps.sh
 │   ├── deploy-landing.sh       # uses pnpm
-│   └── deploy-wallet-master.sh # calls wallet-master/scripts/deploy.sh
+│   ├── deploy-wallet-master.sh
+│   ├── deploy-vaultwarden.sh
+│   └── deploy-obsidian-livesync.sh
 └── docs/
     ├── SETUP.md
     ├── LANDING.md
     ├── ARCHITECTURE.md
     ├── ADDING-AN-APP.md
-    └── wallet-master.md
+    ├── wallet-master.md
+    ├── vaultwarden.md
+    └── obsidian-livesync.md
 ```
 
 ---
@@ -88,6 +102,7 @@ kostecki-dev-infra/
 ```env
 ACME_EMAIL=admin@kostecki.dev
 VPS_LANDING_DIR=/srv/apps/landing
+VPS_OBSIDIAN_LIVESYNC_DIR=/srv/apps/obsidian-livesync
 DOMAIN=kostecki.dev
 DOMAIN_WWW=www.kostecki.dev
 ```
@@ -166,6 +181,18 @@ Updates from `/srv/infra`:
 
 ---
 
+## VPS — Obsidian LiveSync (CouchDB)
+
+Prerequisites: [obsidian-livesync.md](./obsidian-livesync.md) (Cloudflare **DNS only** for `obsidian.kostecki.dev`).
+
+```bash
+cp /srv/infra/stacks/obsidian-livesync/.env.example /srv/apps/obsidian-livesync/.env
+# Edit COUCHDB_USER and COUCHDB_PASSWORD
+./scripts/deploy-obsidian-livesync.sh
+```
+
+---
+
 ## Troubleshooting
 
 **403 / 404, but `docker exec landing wget http://127.0.0.1/` works** — Traefik cannot discover containers (Docker API mismatch). Check logs:
@@ -198,4 +225,4 @@ docker logs traefik 2>&1 | tail -10   # should show no ERR about client version
 
 ## Next application?
 
-See [ADDING-AN-APP.md](./ADDING-AN-APP.md) — **no changes to this repo**, only a new repo + Traefik labels + DNS.
+See [ADDING-AN-APP.md](./ADDING-AN-APP.md) — typical apps need **no changes to Traefik compose**, only a new repo + Traefik labels + DNS. LiveSync is an exception: templates under `stacks/` plus a deploy script.

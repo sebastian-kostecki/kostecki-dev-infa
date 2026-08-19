@@ -18,7 +18,7 @@ sudo ufw allow 443/tcp
 sudo ufw --force enable
 
 echo "==> Creating directories..."
-sudo mkdir -p /srv/infra /srv/apps/landing /srv/apps/wallet-master /srv/apps/vaultwarden /storage/wallet-master-backups
+sudo mkdir -p /srv/infra /srv/apps/landing /srv/apps/wallet-master /srv/apps/vaultwarden /srv/apps/obsidian-livesync /storage/wallet-master-backups
 sudo chown -R "$USER:$USER" /srv /storage/wallet-master-backups
 
 echo "==> Creating Docker network..."
@@ -31,3 +31,4 @@ echo "  3. docker compose up -d"
 echo "  4. Clone kostecki-dev-landing to /srv/apps/landing, build & deploy"
 echo "  5. Clone wallet-master to /srv/apps/wallet-master — see docs/wallet-master.md"
 echo "  6. Clone kostecki-dev-vaultwarden to /srv/apps/vaultwarden — see docs/vaultwarden.md"
+echo "  7. Obsidian LiveSync: copy stacks/obsidian-livesync/.env.example to /srv/apps/obsidian-livesync/.env, then ./scripts/deploy-obsidian-livesync.sh"

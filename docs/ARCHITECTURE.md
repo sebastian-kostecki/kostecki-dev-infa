@@ -19,8 +19,11 @@ Internet :443
        ├── budget.kostecki.dev/app, /apps
        │   Reverb (WebSocket, same app container)
        │
-       └── vault.kostecki.dev
-           vaultwarden   ← kostecki-dev-vaultwarden repo
+       ├── vault.kostecki.dev
+       │   vaultwarden   ← kostecki-dev-vaultwarden repo
+       │
+       └── obsidian.kostecki.dev
+           couchdb (LiveSync)   ← stacks/obsidian-livesync in this repo
 ```
 
 | Layer | Repo | Domain |
@@ -29,23 +32,26 @@ Internet :443
 | Landing | kostecki-dev-landing | kostecki.dev |
 | wallet-master | wallet-master | budget.kostecki.dev (+ Reverb on /app, /apps) |
 | vaultwarden | kostecki-dev-vaultwarden | vault.kostecki.dev |
+| CouchDB (LiveSync) | kostecki-dev-infra (`stacks/obsidian-livesync`) | obsidian.kostecki.dev |
 
 Public exposure: **Traefik only** (ports 80/443).
 
-Details: [wallet-master.md](./wallet-master.md) · [vaultwarden.md](./vaultwarden.md)
+Details: [wallet-master.md](./wallet-master.md) · [vaultwarden.md](./vaultwarden.md) · [obsidian-livesync.md](./obsidian-livesync.md)
 
 ---
 
 ## Repositories
 
 ```text
-kostecki-dev-infra/          ← Traefik, scripts (this repo)
+kostecki-dev-infra/          ← Traefik, scripts, LiveSync stack templates (this repo)
 kostecki-dev-landing/        ← Vue landing
 wallet-master/               ← Laravel + Inertia + Reverb
 kostecki-dev-vaultwarden/    ← Vaultwarden (upstream image)
 ```
 
 Separate repo per application — **no** monorepo or submodules.
+
+**Exception:** Obsidian LiveSync CouchDB has no app repo. YAML lives in this repo and is copied to `/srv/apps/obsidian-livesync`.
 
 On VPS:
 
@@ -55,7 +61,8 @@ On VPS:
 └── apps/
     ├── landing/        ← kostecki-dev-landing
     ├── wallet-master/  ← wallet-master
-    └── vaultwarden/    ← kostecki-dev-vaultwarden
+    ├── vaultwarden/    ← kostecki-dev-vaultwarden
+    └── obsidian-livesync/  ← copied from stacks/obsidian-livesync (not a clone)
 ```
 
 ---
@@ -91,6 +98,8 @@ Generic guide: [ADDING-AN-APP.md](./ADDING-AN-APP.md)
 Laravel-specific: [wallet-master.md](./wallet-master.md)
 
 Third-party image example: [vaultwarden.md](./vaultwarden.md)
+
+Infra-owned stack (copied by deploy script): [obsidian-livesync.md](./obsidian-livesync.md)
 
 ---
 

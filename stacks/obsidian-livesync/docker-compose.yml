@@ -1,0 +1,33 @@
+services:
+  couchdb:
+    image: couchdb:3.4.3
+    container_name: couchdb
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - couchdb-data:/opt/couchdb/data
+      - ./local.d/livesync.ini:/opt/couchdb/etc/local.d/livesync.ini:ro
+    networks:
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.routers.obsidian-livesync.rule=Host(`obsidian.kostecki.dev`)
+      - traefik.http.routers.obsidian-livesync.entrypoints=websecure
+      - traefik.http.routers.obsidian-livesync.tls.certresolver=letsencrypt
+      - traefik.http.routers.obsidian-livesync.priority=10
+      - traefik.http.services.obsidian-livesync.loadbalancer.server.port=5984
+      - traefik.http.routers.obsidian-livesync-fauxton.rule=Host(`obsidian.kostecki.dev`) && PathPrefix(`/_utils`)
+      - traefik.http.routers.obsidian-livesync-fauxton.entrypoints=websecure
+      - traefik.http.routers.obsidian-livesync-fauxton.tls.certresolver=letsencrypt
+      - traefik.http.routers.obsidian-livesync-fauxton.priority=20
+      - traefik.http.routers.obsidian-livesync-fauxton.service=obsidian-livesync
+      - traefik.http.routers.obsidian-livesync-fauxton.middlewares=obsidian-deny-fauxton
+      - traefik.http.middlewares.obsidian-deny-fauxton.ipallowlist.sourcerange=127.0.0.1/32
+
+networks:
+  proxy:
+    external: true
+
+volumes:
+  couchdb-data:
